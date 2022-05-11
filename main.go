@@ -15,6 +15,13 @@ const (
 	LOW = 3
 )
 
+var processList []*process
+var _ []float64
+var estimatedBurstTime []float64
+var _ []int64
+var alpha =0.4
+var variance = float64(0)
+
 type process struct {
 	actualBurstTime, estimatedBurstTime, arrivalTime float64
 	priority int64
@@ -26,18 +33,31 @@ func newProcess(arrivalTime float64) *process {
 	return &p
 }
 
-var processList []*process
-var _ []float64
-var estimatedBurstTime []float64
-var _ []int64
-var alpha =0.4
-var variance = float64(0)
-
 
 func calculateBurst(i int64) float64{
 	process := alpha * processList[i-1].actualBurstTime + (1-alpha) * processList[i-1].estimatedBurstTime
 	estimatedBurstTime = append(estimatedBurstTime, process)
 	return process
+}
+
+func priorityQueue(){
+
+}
+
+func calculateAvgArr(){
+
+}
+
+func calculateAvgWait(){
+
+}
+
+func calculateAvgTurn(){
+
+}
+
+func calculateAvgQueue(){
+	
 }
 
 func main() {
