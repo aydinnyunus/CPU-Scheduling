@@ -3,6 +3,7 @@ module main
 go 1.17
 
 require (
+	github.com/agoussia/godes v0.0.0-20180605170806-4952b44f646a
 	github.com/gonum/floats v0.0.0-20181209220543-c233463c7e82
 	github.com/gonum/stat v0.0.0-20181125101827-41a0da705a5b
 	golang.org/x/exp v0.0.0-20220428152302-39d4317da171

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math/rand"
 	"time"
-	_ "time"
 )
 
 const (
@@ -21,9 +20,15 @@ var estimatedBurstTime []float64
 var _ []int64
 var alpha =0.4
 var variance = float64(0)
+var total_time_counted = float64(0)
+var wait_time = float64(0)
+var turnaround_time = float64(0)
+var totalTime = float64(0)
+
+
 
 type process struct {
-	actualBurstTime, estimatedBurstTime, arrivalTime float64
+	actualBurstTime, estimatedBurstTime, arrivalTime, remainingTime float64
 	priority int64
 }
 
@@ -40,6 +45,31 @@ func calculateBurst(i int64) float64{
 	return process
 }
 
+func roundRobin(totalTime float64){
+	timeQuantum := float64(5)
+	isCalculated := false
+	for totalTime != 0{
+		for i, _ := range processList {
+			if processList[i].remainingTime <= timeQuantum && processList[i].remainingTime >= 0{
+				total_time_counted += processList[i].remainingTime
+				totalTime -= processList[i].remainingTime
+
+				processList[i].remainingTime = 0
+			} else if processList[i].remainingTime > 0 {
+
+				processList[i].remainingTime -= timeQuantum
+				totalTime -= timeQuantum
+				total_time_counted += timeQuantum
+			}
+			if processList[i].remainingTime == 0 && isCalculated {
+
+				wait_time += total_time_counted - processList[i].arrivalTime - processList[i].actualBurstTime
+				turnaround_time += total_time_counted - processList[i].arrivalTime
+				isCalculated = true
+			}
+		}
+	}
+}
 func priorityQueue(){
 
 }
@@ -93,6 +123,8 @@ func main() {
 	//Pop
 	x <- c
 	 */
+
+	/* INITIALIZATION */
 	for i := 1 ; i <= NUMBER_OF_PROCESS; i++ {
 		s1 := rand.NewSource(time.Now().UnixNano())
 
@@ -125,9 +157,11 @@ func main() {
 		process1.priority = priority
 		process1.actualBurstTime = burst
 		processList = append(processList, process1)
-
+		totalTime += processList[i].actualBurstTime
 		fmt.Printf("Process %d Estimated Burst Time : %f\n", i, process1.estimatedBurstTime)
 	}
+
+	roundRobin(totalTime)
 	fmt.Println(processList)
 
 }
