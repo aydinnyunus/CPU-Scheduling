@@ -14,6 +14,7 @@ const (
 	ALPHA         = float64(0.4)
 )
 
+var processList []*Process
 // the arrival and service are two random number generators for the exponential  distribution
 var arrival = godes.NewExpDistr(true)
 var service = godes.NewExpDistr(true)
@@ -91,12 +92,18 @@ func (process *Process) Run() {
 
 }
 
-func getProcessByID() {
-
+func getProcessByID(id int) *Process{
+	for i, _ := range processList{
+		if processList[i].id == id{
+			return processList[i]
+		}
+	}
+	return nil
 }
 
 func calculateBurst(process *Process) float64 {
-	calculate := ALPHA*process.actualBurstTime + (1-ALPHA)*process.estimatedBurstTime
+	id := getProcessByID(process.id - 1)
+	calculate := ALPHA*id.actualBurstTime + (1-ALPHA)*id.estimatedBurstTime
 	return calculate
 }
 
@@ -141,6 +148,7 @@ func main() {
 		customer := &Process{&godes.Runner{}, count, 0, 0, float64(time.Now().Unix()) + no, 0, 0, 0, 0, 0,0,0,0}
 		processArrivalQueue.Place(customer)
 		allProcessQueue.Place(customer)
+		processList = append(processList, customer)
 		if count > 1 {
 			customer.estimatedBurstTime = calculateBurst(customer)
 		}
