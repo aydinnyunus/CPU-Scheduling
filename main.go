@@ -138,7 +138,7 @@ func main() {
 		s1 := rand.NewSource(time.Now().UnixNano())
 		r1 := rand.New(s1)
 		no := arrival.Get(1. / r1.Float64())
-		customer := &Process{&godes.Runner{}, count, 0, 0, float64(time.Now().Unix()) + no, 0, 0, 0, 0, 0}
+		customer := &Process{&godes.Runner{}, count, 0, 0, float64(time.Now().Unix()) + no, 0, 0, 0, 0, 0,0,0,0}
 		processArrivalQueue.Place(customer)
 		allProcessQueue.Place(customer)
 		if count > 1 {
