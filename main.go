@@ -10,9 +10,8 @@ import (
 
 //Input Parameters
 const (
-	SHUTDOWN_TIME    = 8 * 60.
-	ALPHA 			 = float64(0.4)
-
+	SHUTDOWN_TIME = 8 * 60.
+	ALPHA         = float64(0.4)
 )
 
 // the arrival and service are two random number generators for the exponential  distribution
@@ -25,7 +24,6 @@ var counterSwt = godes.NewBooleanControl()
 // FIFO Queue for the arrived customers
 var processArrivalQueue = godes.NewFIFOQueue("0")
 var allProcessQueue = godes.NewFIFOQueue("0")
-
 
 var tellers *Queues
 var measures [][]float64
@@ -66,9 +64,9 @@ func (queues *Queues) Release() {
 // Process the Process is a Runner
 type Process struct {
 	*godes.Runner
-	id int
-	actualBurstTime, estimatedBurstTime, arrivalTime, remainingTime, serviceTime, waitTime, turnAroundTime float64
-	priority int64
+	id                                                                                                                                                     int
+	actualBurstTime, estimatedBurstTime, arrivalTime, remainingTime, serviceTime, waitTime, turnAroundTime, avgArrivalTime, avgWaitTime, avgTurnAroundTime float64
+	priority                                                                                                                                               int64
 }
 
 func (process *Process) Run() {
@@ -93,13 +91,41 @@ func (process *Process) Run() {
 
 }
 
-func getProcessByID(){
+func getProcessByID() {
 
 }
 
-func calculateBurst(process *Process) float64{
-	calculate := ALPHA * process.actualBurstTime + (1-ALPHA) * process.estimatedBurstTime
+func calculateBurst(process *Process) float64 {
+	calculate := ALPHA*process.actualBurstTime + (1-ALPHA)*process.estimatedBurstTime
 	return calculate
+}
+
+func calculateAvgArr(process *Process) {
+	//process.avgArrivalTime = process.arrivalTime / NUMBER_OF_PROCESS
+
+}
+
+func calculateAvgWait(process *Process) {
+	process.waitTime = process.serviceTime - process.arrivalTime
+
+	//process.avgWaitTime = process.waitTime / NUMBER_OF_PROCESS
+
+	//https://www.gatevidyalay.com/round-robin-round-robin-scheduling-examples/
+
+	//Waiting time = Turn Around time – Burst time
+
+}
+
+func calculateAvgTurn(process *Process) {
+
+	process.turnAroundTime = process.waitTime + process.actualBurstTime
+
+	//process.avgTurnAroundTime = process.turnAroundTime / NUMBER_OF_PROCESS
+
+}
+
+func calculateAvgQueue() {
+
 }
 
 func main() {
@@ -112,11 +138,11 @@ func main() {
 		s1 := rand.NewSource(time.Now().UnixNano())
 		r1 := rand.New(s1)
 		no := arrival.Get(1. / r1.Float64())
-		customer := &Process{&godes.Runner{}, count,0,0,float64(time.Now().Unix())+no,0,0,0,0,0}
+		customer := &Process{&godes.Runner{}, count, 0, 0, float64(time.Now().Unix()) + no, 0, 0, 0, 0, 0}
 		processArrivalQueue.Place(customer)
 		allProcessQueue.Place(customer)
-		if count > 1{
-			customer.estimatedBurstTime= calculateBurst(customer)
+		if count > 1 {
+			customer.estimatedBurstTime = calculateBurst(customer)
 		}
 		godes.AddRunner(customer)
 		godes.Advance(no)
