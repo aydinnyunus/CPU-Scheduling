@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"math/rand"
 	"time"
 
@@ -144,42 +145,33 @@ func roundRobin(){
 	timeQuantum := float64(5)
 	totalTime = calculateTotalTime()
 	fmt.Println("Total Time ", totalTime)
-	for totalTime != 0{
+	for math.Floor(totalTime*10000) / 10000 != 0{
 		for i, _ := range processList {
 			if processList[i].remainingTime <= timeQuantum && processList[i].remainingTime > 0{
 				total_time_counted += processList[i].remainingTime
 				totalTime -= processList[i].remainingTime
 
 				processList[i].remainingTime = 0
-				if i == len(processList)-1{
-					fmt.Println(len(processList)-1)
-				}
-				fmt.Println(totalTime)
+				//fmt.Println(totalTime)
 				//fmt.Println("process id is finished ", processList[i].id)
 			} else if processList[i].remainingTime > 0 {
 
 				processList[i].remainingTime -= timeQuantum
 				totalTime -= timeQuantum
 				total_time_counted += timeQuantum
-				if i == len(processList)-1{
-					fmt.Println(len(processList)-1)
-				}
-				fmt.Println(totalTime)
+				//fmt.Println(totalTime)
 
 			}
-			if processList[i].remainingTime == 0 && processList[i].isCalculated {
+			if processList[i].remainingTime == 0 && !processList[i].isCalculated {
 
 				wait_time += total_time_counted - processList[i].arrivalTime - processList[i].actualBurstTime
 				turnaround_time += total_time_counted - processList[i].arrivalTime
 				processList[i].isCalculated = true
-				if i == len(processList)-1{
-					fmt.Println(len(processList)-1)
-				}
-				fmt.Println("process id is calculated ", processList[i].id)
+				//fmt.Println("process id is calculated ", processList[i].id)
 			}
 		}
 	}
-	fmt.Println(wait_time)
+	//fmt.Println(wait_time)
 }
 
 func calculateTotalTime() float64 {
@@ -217,6 +209,9 @@ func main() {
 	collector := godes.NewStatCollector(titles, measures)
 	collector.PrintStat()
 	roundRobin()
+	fmt.Println("Wait Time",wait_time/float64(len(processList)))
+	fmt.Println("TurnAround Time",turnaround_time/float64(len(processList)))
+
 	fmt.Printf("Finished \n")
 }
 
