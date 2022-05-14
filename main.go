@@ -13,6 +13,10 @@ import (
 const (
 	SHUTDOWN_TIME = 8 * 60.
 	ALPHA         = float64(0.4)
+	REALTIME = 0
+	HIGH = 1
+	NORMAL = 2
+	LOW = 3
 )
 
 var processList []*Process
@@ -37,9 +41,9 @@ var titles = []string{
 }
 
 var availableQueues = 0
-var total_time_counted = float64(0)
-var wait_time = float64(0)
-var turnaround_time = float64(0)
+var totalTimeCounted = float64(0)
+var waitTime = float64(0)
+var turnaroundTime = float64(0)
 var totalTime = float64(0)
 
 // Queues the Queues is a Passive Object represebting resource
@@ -71,7 +75,7 @@ func (queues *Queues) Release() {
 type Process struct {
 	*godes.Runner
 	id                                                                                                                                                     int
-	actualBurstTime, estimatedBurstTime, arrivalTime, remainingTime, serviceTime, waitTime, turnAroundTime, avgArrivalTime, avgWaitTime, avgTurnAroundTime float64
+	exitTime, actualBurstTime, estimatedBurstTime, arrivalTime, remainingTime, serviceTime, waitTime, turnAroundTime, avgArrivalTime, avgWaitTime, avgTurnAroundTime float64
 	priority                                                                                                                                               int64
 	isCalculated																																		   bool
 }
@@ -148,7 +152,7 @@ func roundRobin(){
 	for math.Floor(totalTime*10000) / 10000 != 0{
 		for i, _ := range processList {
 			if processList[i].remainingTime <= timeQuantum && processList[i].remainingTime > 0{
-				total_time_counted += processList[i].remainingTime
+				totalTimeCounted += processList[i].remainingTime
 				totalTime -= processList[i].remainingTime
 
 				processList[i].remainingTime = 0
@@ -158,14 +162,18 @@ func roundRobin(){
 
 				processList[i].remainingTime -= timeQuantum
 				totalTime -= timeQuantum
-				total_time_counted += timeQuantum
+				totalTimeCounted += timeQuantum
 				//fmt.Println(totalTime)
 
 			}
 			if processList[i].remainingTime == 0 && !processList[i].isCalculated {
+				processList[i].waitTime = totalTimeCounted - processList[i].arrivalTime - processList[i].actualBurstTime
+				waitTime += processList[i].waitTime
 
-				wait_time += total_time_counted - processList[i].arrivalTime - processList[i].actualBurstTime
-				turnaround_time += total_time_counted - processList[i].arrivalTime
+				processList[i].turnAroundTime = totalTimeCounted - processList[i].arrivalTime
+				turnaroundTime += processList[i].turnAroundTime
+
+				processList[i].exitTime = processList[i].arrivalTime + processList[i].turnAroundTime
 				processList[i].isCalculated = true
 				//fmt.Println("process id is calculated ", processList[i].id)
 			}
@@ -192,7 +200,7 @@ func main() {
 		r1 := rand.New(s1)
 		no := arrival.Get(1. / r1.Float64())
 		burst := r1.Float64()*100
-		customer := &Process{&godes.Runner{}, count, burst, 0, no, burst, 0, 0, 0, 0,0,0,0,false}
+		customer := &Process{&godes.Runner{}, count, burst, 0, no, burst, 0, 0, 0, 0,0,0,0,0,false}
 		processArrivalQueue.Place(customer)
 		processList = append(processList, customer)
 		if count > 1 {
@@ -209,8 +217,8 @@ func main() {
 	collector := godes.NewStatCollector(titles, measures)
 	collector.PrintStat()
 	roundRobin()
-	fmt.Println("Wait Time",wait_time/float64(len(processList)))
-	fmt.Println("TurnAround Time",turnaround_time/float64(len(processList)))
+	fmt.Println("Wait Time", waitTime/float64(len(processList)))
+	fmt.Println("TurnAround Time", turnaroundTime/float64(len(processList)))
 
 	fmt.Printf("Finished \n")
 }
