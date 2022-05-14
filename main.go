@@ -11,15 +11,15 @@ import (
 
 //Input Parameters
 const (
-	SHUTDOWN_TIME = 8 * 60.
-	ALPHA         = float64(0.4)
-	REALTIME = 0
+	ShutdownTime = 8 * 60.
+	ALPHA        = float64(0.4)
 	HIGH = 1
 	NORMAL = 2
 	LOW = 3
 )
 
 var processList []*Process
+var queueList []*Queues
 // the arrival and service are two random number generators for the exponential  distribution
 var arrival = godes.NewExpDistr(true)
 var service = godes.NewExpDistr(true)
@@ -40,15 +40,17 @@ var titles = []string{
 	"Service Time",
 }
 
-var availableQueues = 0
 var totalTimeCounted = float64(0)
 var waitTime = float64(0)
 var turnaroundTime = float64(0)
 var totalTime = float64(0)
 
-// Queues the Queues is a Passive Object represebting resource
+// Queues the Queues is a Passive Object representing resource
 type Queues struct {
+	id int
 	max int
+	priority int
+	availableQueues int
 }
 
 func (queues *Queues) Catch(customer *Process) {
@@ -60,14 +62,14 @@ func (queues *Queues) Catch(customer *Process) {
 			godes.Yield()
 		}
 	}
-	availableQueues++
-	if availableQueues == queues.max {
+	queues.availableQueues++
+	if queues.availableQueues == queues.max {
 		counterSwt.Set(false)
 	}
 }
 
 func (queues *Queues) Release() {
-	availableQueues--
+	queues.availableQueues--
 	counterSwt.Set(true)
 }
 
@@ -76,7 +78,6 @@ type Process struct {
 	*godes.Runner
 	id                                                                                                                                                     int
 	exitTime, actualBurstTime, estimatedBurstTime, arrivalTime, remainingTime, serviceTime, waitTime, turnAroundTime, avgArrivalTime, avgWaitTime, avgTurnAroundTime float64
-	priority                                                                                                                                               int64
 	isCalculated																																		   bool
 }
 
@@ -86,7 +87,32 @@ func (process *Process) Run() {
 	no := service.Get(1. / r1.Float64())
 	process.serviceTime = no
 	a0 := godes.GetSystemTime()
-	tellers.Catch(process)
+	min := queueList[0]
+	max := queueList[0]
+	middle := queueList[0]
+	setPriorities()
+	for _, value := range queueList {
+		if 	value.priority< min.priority {
+			min = value
+		}
+		if value.priority > max.priority {
+			max = value
+		}
+	}
+
+	for i:=0;i<3;i++{
+		if middle.id == max.id{
+			continue
+		}else if middle.id == min.id{
+			middle = queueList[i+1]
+			continue
+		}
+	}
+	max.Catch(process)
+	middle.Catch(process)
+	min.Catch(process)
+
+
 	a1 := godes.GetSystemTime()
 	processArrivalQueue.Get()
 	qlength := float64(processArrivalQueue.Len())
@@ -103,7 +129,7 @@ func (process *Process) Run() {
 }
 
 func getProcessByID(id int) *Process{
-	for i, _ := range processList{
+	for i := range processList{
 		if processList[i].id == id{
 			return processList[i]
 		}
@@ -117,27 +143,24 @@ func calculateBurst(process *Process) float64 {
 	return calculate
 }
 
-func calculateAvgArr(process *Process) {
-	//process.avgArrivalTime = process.arrivalTime / NUMBER_OF_PROCESS
+func calculateAvgArr() float64 {
+	arr := float64(0)
+	for i := range processList{
+		arr += processList[i].arrivalTime
+	}
+	return arr / float64(len(processList))
 
 }
 
-func calculateAvgWait(process *Process) {
-	process.waitTime = process.serviceTime - process.arrivalTime
+func calculateAvgWait() float64{
 
-	//process.avgWaitTime = process.waitTime / NUMBER_OF_PROCESS
-
-	//https://www.gatevidyalay.com/round-robin-round-robin-scheduling-examples/
-
-	//Waiting time = Turn Around time – Burst time
+	return waitTime / (float64)(len(processList))
 
 }
 
-func calculateAvgTurn(process *Process) {
+func calculateAvgTurn() float64 {
 
-	process.turnAroundTime = process.waitTime + process.actualBurstTime
-
-	//process.avgTurnAroundTime = process.turnAroundTime / NUMBER_OF_PROCESS
+	return turnaroundTime / (float64)(len(processList))
 
 }
 
@@ -145,12 +168,38 @@ func calculateAvgQueue() {
 
 }
 
+func findMinAndMaxAvailable() (min *Queues, max *Queues) {
+	min = queueList[0]
+	max = queueList[0]
+	for _, value := range queueList {
+		if 	value.availableQueues< min.availableQueues {
+			min.availableQueues = value.availableQueues
+		}
+		if value.availableQueues > max.availableQueues {
+			max.availableQueues = value.availableQueues
+		}
+	}
+	return min, max
+}
+
+func setPriorities (){
+	min, max := findMinAndMaxAvailable()
+	for i := range queueList{
+		if queueList[i] == max{
+			max.priority = HIGH
+		} else if queueList[i] == min{
+			min.priority = NORMAL
+		} else {
+			queueList[i].priority = LOW
+		}
+	}
+}
 func roundRobin(){
 	timeQuantum := float64(5)
 	totalTime = calculateTotalTime()
 	fmt.Println("Total Time ", totalTime)
 	for math.Floor(totalTime*10000) / 10000 != 0{
-		for i, _ := range processList {
+		for i := range processList {
 			if processList[i].remainingTime <= timeQuantum && processList[i].remainingTime > 0{
 				totalTimeCounted += processList[i].remainingTime
 				totalTime -= processList[i].remainingTime
@@ -183,7 +232,7 @@ func roundRobin(){
 }
 
 func calculateTotalTime() float64 {
-	for i,_ := range processList{
+	for i := range processList{
 		totalTime += processList[i].actualBurstTime
 	}
 	return totalTime
@@ -191,7 +240,10 @@ func calculateTotalTime() float64 {
 
 func main() {
 	measures = [][]float64{}
-	tellers = &Queues{3}
+	for i:=0;i<3;i++{
+		tellers = &Queues{i,3,0,0}
+		queueList = append(queueList, tellers)
+	}
 	godes.Run()
 	counterSwt.Set(true)
 	count := 0
@@ -200,7 +252,7 @@ func main() {
 		r1 := rand.New(s1)
 		no := arrival.Get(1. / r1.Float64())
 		burst := r1.Float64()*100
-		customer := &Process{&godes.Runner{}, count, burst, 0, no, burst, 0, 0, 0, 0,0,0,0,0,false}
+		customer := &Process{&godes.Runner{}, count, burst, 0, no, burst, 0, 0, 0, 0,0,0,0,false}
 		processArrivalQueue.Place(customer)
 		processList = append(processList, customer)
 		if count > 1 {
@@ -208,7 +260,7 @@ func main() {
 		}
 		godes.AddRunner(customer)
 		godes.Advance(no)
-		if godes.GetSystemTime() > SHUTDOWN_TIME {
+		if godes.GetSystemTime() > ShutdownTime {
 			break
 		}
 		count++
