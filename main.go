@@ -18,13 +18,13 @@ var processList []*Process
 // the arrival and service are two random number generators for the exponential  distribution
 var arrival = godes.NewExpDistr(true)
 var service = godes.NewExpDistr(true)
+var exit	= godes.NewExpDistr(true)
 
 // true when any counter is available
 var counterSwt = godes.NewBooleanControl()
 
 // FIFO Queue for the arrived customers
 var processArrivalQueue = godes.NewFIFOQueue("0")
-var allProcessQueue = godes.NewFIFOQueue("0")
 
 var tellers *Queues
 var measures [][]float64
@@ -35,9 +35,13 @@ var titles = []string{
 	"Service Time",
 }
 
-var availableQueues int = 0
+var availableQueues = 0
+var total_time_counted = float64(0)
+var wait_time = float64(0)
+var turnaround_time = float64(0)
+var totalTime = float64(0)
 
-// the Queues is a Passive Object represebting resource
+// Queues the Queues is a Passive Object represebting resource
 type Queues struct {
 	max int
 }
@@ -68,13 +72,14 @@ type Process struct {
 	id                                                                                                                                                     int
 	actualBurstTime, estimatedBurstTime, arrivalTime, remainingTime, serviceTime, waitTime, turnAroundTime, avgArrivalTime, avgWaitTime, avgTurnAroundTime float64
 	priority                                                                                                                                               int64
+	isCalculated																																		   bool
 }
 
 func (process *Process) Run() {
 	s1 := rand.NewSource(time.Now().UnixNano())
 	r1 := rand.New(s1)
 	no := service.Get(1. / r1.Float64())
-	process.serviceTime = float64(time.Now().Unix()) + no
+	process.serviceTime = no
 	a0 := godes.GetSystemTime()
 	tellers.Catch(process)
 	a1 := godes.GetSystemTime()
@@ -135,6 +140,55 @@ func calculateAvgQueue() {
 
 }
 
+func roundRobin(){
+	timeQuantum := float64(5)
+	totalTime = calculateTotalTime()
+	fmt.Println("Total Time ", totalTime)
+	for totalTime != 0{
+		for i, _ := range processList {
+			if processList[i].remainingTime <= timeQuantum && processList[i].remainingTime > 0{
+				total_time_counted += processList[i].remainingTime
+				totalTime -= processList[i].remainingTime
+
+				processList[i].remainingTime = 0
+				if i == len(processList)-1{
+					fmt.Println(len(processList)-1)
+				}
+				fmt.Println(totalTime)
+				//fmt.Println("process id is finished ", processList[i].id)
+			} else if processList[i].remainingTime > 0 {
+
+				processList[i].remainingTime -= timeQuantum
+				totalTime -= timeQuantum
+				total_time_counted += timeQuantum
+				if i == len(processList)-1{
+					fmt.Println(len(processList)-1)
+				}
+				fmt.Println(totalTime)
+
+			}
+			if processList[i].remainingTime == 0 && processList[i].isCalculated {
+
+				wait_time += total_time_counted - processList[i].arrivalTime - processList[i].actualBurstTime
+				turnaround_time += total_time_counted - processList[i].arrivalTime
+				processList[i].isCalculated = true
+				if i == len(processList)-1{
+					fmt.Println(len(processList)-1)
+				}
+				fmt.Println("process id is calculated ", processList[i].id)
+			}
+		}
+	}
+	fmt.Println(wait_time)
+}
+
+func calculateTotalTime() float64 {
+	for i,_ := range processList{
+		totalTime += processList[i].actualBurstTime
+	}
+	return totalTime
+}
+
 func main() {
 	measures = [][]float64{}
 	tellers = &Queues{3}
@@ -145,9 +199,9 @@ func main() {
 		s1 := rand.NewSource(time.Now().UnixNano())
 		r1 := rand.New(s1)
 		no := arrival.Get(1. / r1.Float64())
-		customer := &Process{&godes.Runner{}, count, 0, 0, float64(time.Now().Unix()) + no, 0, 0, 0, 0, 0,0,0,0}
+		burst := r1.Float64()*100
+		customer := &Process{&godes.Runner{}, count, burst, 0, no, burst, 0, 0, 0, 0,0,0,0,false}
 		processArrivalQueue.Place(customer)
-		allProcessQueue.Place(customer)
 		processList = append(processList, customer)
 		if count > 1 {
 			customer.estimatedBurstTime = calculateBurst(customer)
@@ -162,6 +216,7 @@ func main() {
 	godes.WaitUntilDone() // waits for all the runners to finish the Run()
 	collector := godes.NewStatCollector(titles, measures)
 	collector.PrintStat()
+	roundRobin()
 	fmt.Printf("Finished \n")
 }
 
