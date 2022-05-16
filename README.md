@@ -32,6 +32,7 @@ The aim of the project is to schedule CPU Process with stochastic variables. The
 
 &nbsp;
 &nbsp;
+&nbsp;
 
 **Code Example**
 ```
