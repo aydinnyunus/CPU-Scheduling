@@ -224,16 +224,12 @@ func (process *Process) Run() {
 
 2. Create simulation for getting next process and calculate average burst time and arrival time and visualize queue.
 
-&nbsp;
 
 ![Graph](2022-05-16_22-36_1.png)
-
 
 I use HTML template for transfering data to Golang to JavaScript. I transfered the Process Burst and Arrival Time array and when User Clicks the "Get Next Process" button, It gets the process from the Array. If User clicks the "Calculate Average Burst Time", burst time is calculated according to visualized queue.
 
 ![Simulation](2022-05-16_22-36.png)
-
-
 
 
 
