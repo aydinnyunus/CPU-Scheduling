@@ -219,7 +219,6 @@ func (process *Process) Run() {
 
 1. Create some graphs for visualize data
 
-![Graph](2022-05-16_22-36_1.png)
 
 &nbsp;
 
@@ -227,10 +226,15 @@ func (process *Process) Run() {
 
 &nbsp;
 
-![Simulation](2022-05-16_22-36.png)
+![Graph](2022-05-16_22-36_1.png)
 
 
 I use HTML template for transfering data to Golang to JavaScript. I transfered the Process Burst and Arrival Time array and when User Clicks the "Get Next Process" button, It gets the process from the Array. If User clicks the "Calculate Average Burst Time", burst time is calculated according to visualized queue.
+
+![Simulation](2022-05-16_22-36.png)
+
+
+
 
 
 ```
