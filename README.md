@@ -30,6 +30,9 @@ The aim of the project is to schedule CPU Process with stochastic variables. The
 2. Creating Functions
 - Rand function returns a random sample drawn from the distribution. I got the formula from NUMERICAL RECIPES IN C: THE ART OF SCIENTIFIC COMPUTING (ISBN 0-521-43108-5) p. 294 <http://www.aip.de/groups/soe/local/numres/bookcpdf/c7-3.pdf>
 
+\
+\
+**Code Example**
 ```
 func (p Poisson) Rand() float64 {
 	
