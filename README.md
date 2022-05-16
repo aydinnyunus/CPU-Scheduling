@@ -227,6 +227,7 @@ func (process *Process) Run() {
 ### Phase 4: Simulation on HTTP Server
 
 1. Create some graphs for visualize data
+
 ![Graph](2022-05-16_22-36_1.png)
 
 2. Create simulation for getting next process and calculate average burst time and arrival time and visualize queue.
