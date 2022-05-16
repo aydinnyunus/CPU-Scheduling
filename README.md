@@ -206,11 +206,9 @@ func (process *Process) Run() {
 			max = value
 		}
 	}
-
 	max.Catch(process)
 	a1 := godes.GetSystemTime()
 	processArrivalQueue.Get()
-
 	qlength := float64(processArrivalQueue.Len())
 	godes.Advance(no)
 	a2 := godes.GetSystemTime()
