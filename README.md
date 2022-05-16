@@ -61,10 +61,6 @@ func (p Poisson) Rand() float64 {
 		}
 		return em
 	}
-	// Generate using:
-	//  W. Hörmann. "The transformed rejection method for generating Poisson
-	//  random variables." Insurance: Mathematics and Economics
-	//  12.1 (1993): 39-45.
 
 	// Algorithm PTRS
 	rnd = rand.Float64
