@@ -131,9 +131,6 @@ func roundRobin() {
 				processList[i].exitTime = processList[i].arrivalTime + processList[i].turnAroundTime
 				processList[i].isCalculated = true
 			}
-		}
-	}
-}
 
 ```
 
