@@ -86,8 +86,6 @@ func (p Poisson) Rand() float64 {
 		if math.Log(V*invalpha/(a/(us*us)+b)) <= k*math.Log(p.Lambda)-p.Lambda-lg {
 			return k
 		}
-	}
-}
 
 ```
 
