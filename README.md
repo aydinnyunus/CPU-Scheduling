@@ -36,6 +36,9 @@ The aim of the project is to schedule CPU Process with stochastic variables. The
 &nbsp;
 &nbsp;
 
+\
+
+**Code Example**
 
 ```
 func (p Poisson) Rand() float64 {
