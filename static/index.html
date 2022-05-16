@@ -1,0 +1,96 @@
+<html>
+<head>
+  <meta charSet="utf-8">
+  <title>First Template</title>
+  <link rel="stylesheet" href="/static/styles/home.css">
+</head>
+<body>
+<script>
+  var arr = [
+    {{range .}}
+  {{.ID}},
+  {{end}}
+  ];
+
+  var burst_arr = [
+    {{range .}}
+  {{.ActualBurstTime}},
+  {{end}}
+  ];
+
+  var arrival_arr = [
+    {{range .}}
+  {{.ArrivalTime}},
+  {{end}}
+  ];
+
+  // Now you have a javascript array: arr, loop over it to do something:
+  html = "";
+  for(var i = 0; i < arr.length; i++) {
+    html += " " + arr[i];
+  }
+  console.log(html);
+</script>
+<button name="button" value="Get Next Process" onclick="drawSquare()">Get Next Process</button>
+<button name="calculateAvgArrival" value="Calculate Average Arrival" onclick='document.getElementById("p1").innerHTML="Average Arrival Time " + calculateAvgArrival()'>Calculate Average Arrival</button>
+<button name="calculateAvgBurst" value="Calculate Average Burst" onclick='document.getElementById("p2").innerHTML="Average Burst Time "+calculateAvgBurst()'>Calculate Average Burst</button>
+
+<p id="p1"></p>
+<p id="p2"></p>
+
+<canvas id="myCanvas" width=1800 height=1800 style="border:1px solid #d3d3d3;">
+  Your browser does not support the HTML5 canvas tag.</canvas>
+
+<script>
+  var i = 0
+  var x = 20
+  var y = 20
+  function drawSquare(){
+
+    var c = document.getElementById("myCanvas");
+    var ctx = c.getContext("2d");
+    ctx.beginPath();
+    if(i%40==0){
+      x=20
+
+      y+=30
+    }
+    ctx.strokeStyle = "green";
+    ctx.rect(x, y, 30, 15);
+    if(i < arr.length){
+      ctx.fillText("P"+arr[i],x,y+8);
+    }else{
+      exit
+    }
+
+    x+=30
+
+    ctx.stroke();
+    i++
+  }
+
+  function calculateAvgArrival(){
+    let result=0;
+    let j=0;
+    for(j=0;j<i;j++){
+      result += arrival_arr[j];
+    }
+    result = result / (j+1);
+    console.log(result);
+    return result;
+  }
+
+  function calculateAvgBurst(){
+    let result=0;
+    let j=0;
+    for(j=0;j<i;j++){
+      result += burst_arr[j];
+    }
+    result = result / (j+1);
+    console.log(result);
+    return result;
+  }
+</script>
+
+</body>
+</html>

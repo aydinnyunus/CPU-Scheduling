@@ -2,8 +2,11 @@ package main
 
 import (
 	"fmt"
+	"html/template"
+	"log"
 	"math"
 	"math/rand"
+	"strconv"
 	"time"
 
 	"github.com/agoussia/godes"
@@ -25,6 +28,7 @@ const (
 
 var processList []*Process
 var queueList []*Queues
+var jsList []*Process
 var values = make([]opts.LineData, 0)
 var items = make([]opts.LineData, 0)
 
@@ -54,6 +58,7 @@ var waitTime = float64(0)
 var turnaroundTime = float64(0)
 var totalTime = float64(0)
 var remainingTime = float64(0)
+var getNextProcessIndex = 0
 
 
 // Queues the Queues is a Passive Object representing resource
@@ -67,7 +72,7 @@ type Queues struct {
 func (queues *Queues) Catch(customer *Process) {
 	for {
 		counterSwt.Wait(true)
-		if processArrivalQueue.GetHead().(*Process).id == customer.id {
+		if processArrivalQueue.GetHead().(*Process).ID == customer.ID {
 			break
 		} else {
 			godes.Yield()
@@ -89,9 +94,9 @@ func (queues *Queues) Release() {
 // Process the Process is a Runner
 type Process struct {
 	*godes.Runner
-	id                                                                                                                                                     int
-	exitTime, actualBurstTime, estimatedBurstTime, arrivalTime, remainingTime, serviceTime, waitTime, turnAroundTime, avgArrivalTime, avgWaitTime, avgTurnAroundTime float64
-	isCalculated																																		   bool
+	ID                                                                                                                                                               int
+	exitTime, ActualBurstTime, estimatedBurstTime, ArrivalTime, remainingTime, serviceTime, waitTime, turnAroundTime, avgArrivalTime, avgWaitTime, avgTurnAroundTime float64
+	isCalculated                                                                                                                                                     bool
 }
 
 func (process *Process) Run() {
@@ -125,14 +130,14 @@ func (process *Process) Run() {
 	measures = append(measures, collectionArray)
 	fmt.Printf("Estimated Burst Time %f", process.estimatedBurstTime)
 	fmt.Println()
-	fmt.Printf("Arrival Time %f", process.arrivalTime)
+	fmt.Printf("Arrival Time %f", process.ArrivalTime)
 	fmt.Println()
 
 }
 
 func getProcessByID(id int) *Process{
 	for i := range processList{
-		if processList[i].id == id{
+		if processList[i].ID == id{
 			return processList[i]
 		}
 	}
@@ -140,15 +145,15 @@ func getProcessByID(id int) *Process{
 }
 
 func calculateBurst(process *Process) float64 {
-	id := getProcessByID(process.id - 1)
-	calculate := ALPHA*id.actualBurstTime + (1-ALPHA)*id.estimatedBurstTime
+	id := getProcessByID(process.ID - 1)
+	calculate := ALPHA*id.ActualBurstTime + (1-ALPHA)*id.estimatedBurstTime
 	return calculate
 }
 
 func calculateAvgArr() float64 {
 	arr := float64(0)
 	for i := range processList{
-		arr += processList[i].arrivalTime
+		arr += processList[i].ArrivalTime
 	}
 	return arr / float64(len(processList))
 
@@ -201,39 +206,43 @@ func roundRobin() {
 	timeQuantum := float64(5)
 	totalTime = calculateTotalTime()
 	remainingTime = calculateRemaining()
-	values = append(values, opts.LineData{Value: values})
+	values = append(values, opts.LineData{Value: totalTime})
+	for i:=0;i<100;i+=100{
+		items = append(items,values[i])
+	}
 	fmt.Println("Total Time ", totalTime)
 	for math.Round(totalTime*10000) / 10000 != 0{
 		for i := range processList {
+			jsList = append(jsList, processList[i])
 			if processList[i].remainingTime <= timeQuantum && processList[i].remainingTime > 0{
 				totalTimeCounted += processList[i].remainingTime
 				totalTime -= processList[i].remainingTime
 
 				processList[i].remainingTime = 0
-				values = append(values, opts.LineData{Value: values})
+				values = append(values, opts.LineData{Value: totalTime})
 
 				//fmt.Println(totalTime)
-				//fmt.Println("process id is finished ", processList[i].id)
+				//fmt.Println("process ID is finished ", processList[i].ID)
 			} else if processList[i].remainingTime > 0 {
 
 				processList[i].remainingTime -= timeQuantum
 				totalTime -= timeQuantum
 				totalTimeCounted += timeQuantum
-				values = append(values, opts.LineData{Value: values})
+				values = append(values, opts.LineData{Value: totalTime})
 
 				//fmt.Println(totalTime)
 
 			}
 			if processList[i].remainingTime == 0 && !processList[i].isCalculated {
-				processList[i].waitTime = totalTimeCounted - processList[i].arrivalTime - processList[i].actualBurstTime
+				processList[i].waitTime = totalTimeCounted - processList[i].ArrivalTime - processList[i].ActualBurstTime
 				waitTime += processList[i].waitTime
 
-				processList[i].turnAroundTime = totalTimeCounted - processList[i].arrivalTime
+				processList[i].turnAroundTime = totalTimeCounted - processList[i].ArrivalTime
 				turnaroundTime += processList[i].turnAroundTime
 
-				processList[i].exitTime = processList[i].arrivalTime + processList[i].turnAroundTime
+				processList[i].exitTime = processList[i].ArrivalTime + processList[i].turnAroundTime
 				processList[i].isCalculated = true
-				//fmt.Println("process id is calculated ", processList[i].id)
+				//fmt.Println("process ID is calculated ", processList[i].ID)
 			}
 		}
 	}
@@ -242,7 +251,7 @@ func roundRobin() {
 
 func calculateTotalTime() float64 {
 	for i := range processList{
-		totalTime += processList[i].actualBurstTime
+		totalTime += processList[i].ActualBurstTime
 	}
 	return totalTime
 }
@@ -254,10 +263,11 @@ func calculateRemaining() float64 {
 	return remainingTime
 }
 
+// generate random data for line chart
 func generateLineItems() []opts.LineData {
 	items := make([]opts.LineData, 0)
-	for i := 0; i < 7; i++ {
-		items = append(items, opts.LineData{Value: rand.Intn(300)})
+	for i := 0; i < len(values); i+=100 {
+		items = append(items, opts.LineData{Value: values[i].Value})
 	}
 	return items
 }
@@ -265,9 +275,12 @@ func generateLineItems() []opts.LineData {
 func httpserver(w http.ResponseWriter, _ *http.Request) {
 	// create a new line instance
 	line := charts.NewLine()
-	for i:=0;i<5;i+=1000{
-		items = append(items,values[i])
+	xAxis := make([]string, 0)
+
+	for i:=0;i < 1000;i+=10{
+		xAxis = append(xAxis, strconv.Itoa(i))
 	}
+
 	// set some global options like Title/Legend/ToolTip or anything else
 	line.SetGlobalOptions(
 		charts.WithInitializationOpts(opts.Initialization{Theme: types.ThemeWesteros}),
@@ -277,7 +290,7 @@ func httpserver(w http.ResponseWriter, _ *http.Request) {
 		}))
 
 	// Put data into instance
-	line.SetXAxis([]string{"0", "100", "200", "300", "400", "500", "600"}).
+	line.SetXAxis(xAxis).
 		AddSeries("Category A", generateLineItems()).
 		SetSeriesOptions(charts.WithLineChartOpts(opts.LineChart{Smooth: true}))
 	line.Render(w)
@@ -301,7 +314,7 @@ func main() {
 		customer := &Process{&godes.Runner{}, count, 0, b, 0, no, b, 0, 0, 0,0,0,0,false}
 		processArrivalQueue.Place(customer)
 		processList = append(processList, customer)
-		processList[0].arrivalTime = 0
+		processList[0].ArrivalTime = 0
 
 		if count > 1 {
 			customer.estimatedBurstTime = calculateBurst(customer)
@@ -328,8 +341,60 @@ func main() {
 
 	//boxPlot(values)
 	//barPlot(values[:4])
-	http.HandleFunc("/", httpserver)
+
+
+	http.HandleFunc("/queue", HomeHandler)
+	http.HandleFunc("/stats", getStats)
+	http.HandleFunc("/graph", httpserver)
+	http.HandleFunc("/form", formHandler)
 	http.ListenAndServe(":8081", nil)
+
+
+
+}
+
+
+func getStats(w http.ResponseWriter, req *http.Request) {
+
+	fmt.Fprintf(w,"Average Waiting Time %f", waitTime/float64(len(processList)))
+	fmt.Fprintf(w,"TurnAround Time", turnaroundTime/float64(len(processList)))
+}
+
+func formHandler(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		fmt.Fprintf(w, "ParseForm() err: %v", err)
+		return
+	}
+	//fmt.Fprintf(w, "POST request successful")
+	name := r.FormValue("button")
+
+	fmt.Fprintf(w, "Name = %s\n", name)
+	if name == "Get Next Process"{
+		getNextProcessIndex++
+		fmt.Fprintf(w,"Process %d Arrival Time : %f\n",getNextProcessIndex,processList[getNextProcessIndex].ArrivalTime)
+		fmt.Fprintf(w,"Process %d Waiting Time : %f\n",getNextProcessIndex,processList[getNextProcessIndex].waitTime)
+		fmt.Fprintf(w,"Process %d TurnAround Time : %f\n",getNextProcessIndex,processList[getNextProcessIndex].turnAroundTime)
+
+		fmt.Fprintf(w, `<html>
+            <head>
+            </head>
+            <body>
+            <h1>Go Timer (ticks every second!)</h1>
+            <div ID="output"></div>
+            <script type="text/javascript">
+            alert("a");
+            </script>
+            </body>
+            </html>`)
+	}
+}
+
+func HomeHandler(w http.ResponseWriter, r *http.Request) {
+	parsedTemplate, _ := template.ParseFiles("static/index.html")
+	err := parsedTemplate.Execute(w, jsList)
+	if err != nil {
+		log.Fatal("Error executing template:", err)
+	}
 }
 
 /* OUTPUT
