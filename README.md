@@ -194,7 +194,6 @@ func (process *Process) Run() {
 	no := service.Get(1. / r1.Float64())
 	process.serviceTime = no
 	a0 := godes.GetSystemTime()
-
 	min := queueList[0]
 	max := queueList[0]
 	setPriorities()
