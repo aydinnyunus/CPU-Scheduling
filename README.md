@@ -221,6 +221,8 @@ func (process *Process) Run() {
 
 ![Graph](2022-05-16_22-36_1.png)
 
+&nbsp;
+
 2. Create simulation for getting next process and calculate average burst time and arrival time and visualize queue.
 
 &nbsp;
