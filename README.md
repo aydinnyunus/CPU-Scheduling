@@ -39,15 +39,12 @@ The aim of the project is to schedule CPU Process with stochastic variables. The
 **Code Example**
 ```
 func (p Poisson) Rand() float64 {
-	
-
 	rnd := rand.ExpFloat64
 	var rng *rand.Rand
 	if p.Src != nil {
 		rng = rand.New(p.Src)
 		rnd = rng.ExpFloat64
 	}
-
 	if p.Lambda < 10.0 {
 		// Use direct method.
 		var em float64
@@ -61,7 +58,6 @@ func (p Poisson) Rand() float64 {
 		}
 		return em
 	}
-
 	// Algorithm PTRS
 	rnd = rand.Float64
 	if rng != nil {
