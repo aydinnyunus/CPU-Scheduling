@@ -25,16 +25,14 @@ The aim of the project is to schedule CPU Process with stochastic variables. The
 
 1. Found the formula that needed on [Computer Simulation Techniques:The definitive introduction](https://people.engr.ncsu.edu/hp/files/Simulation.pdf) and I use the formula for generating Random Numbers using Exponential Distribution and [Poisson Distribution](http://www.aip.de/groups/soe/local/numres/bookcpdf/c7-3.pdf)
 
-![Exponential Distrubtion Formula](2022-05-16_01-46.png)
+![Exponential Distribution Formula](2022-05-16_01-46.png)
 
 2. Creating Functions
+- Rand function returns a random sample drawn from the distribution. I got the formula from NUMERICAL RECIPES IN C: THE ART OF SCIENTIFIC COMPUTING (ISBN 0-521-43108-5) p. 294 <http://www.aip.de/groups/soe/local/numres/bookcpdf/c7-3.pdf>
 
 ```
-// Rand returns a random sample drawn from the distribution.
 func (p Poisson) Rand() float64 {
-	// NUMERICAL RECIPES IN C: THE ART OF SCIENTIFIC COMPUTING (ISBN 0-521-43108-5)
-	// p. 294
-	// <http://www.aip.de/groups/soe/local/numres/bookcpdf/c7-3.pdf>
+	
 
 	rnd := rand.ExpFloat64
 	var rng *rand.Rand
@@ -92,6 +90,12 @@ func (p Poisson) Rand() float64 {
 
 ### Phase 2: Implementing Round Robin Algorithm
 
+Round Robin is a CPU scheduling algorithm where each process is assigned a fixed time slot in a cyclic way. 
+
+1. I set time quantum value for 5 because generated random number range is 0 to 10 and I decided to set quantum value average of random numbers. 
+2. I calculate the Total Burst Time and Remaining Time. After that I extract the calculated values from Total Burst Time and Remaining Time and if Remaining Time of the process is 0 then that process is calculated so pass that process. 
+3. Lastly, calculate the Turn Around Time, Exit Time and Wait Time of each processes.
+
 ```
 func roundRobin() {
 	timeQuantum := float64(5)
@@ -137,14 +141,14 @@ func roundRobin() {
 
 ```
 
-*Approximate implementation time: 3 days (August 11th - August 13th)*
-
-
 
 ### Phase 3: Implement Queue Modeling and Random Processes
 
+1. I created structs for Queues and Processes. Queues contains id of the queue, maximum length, priority and available length.
+2. I created Catch method to check if queue is available for catching process
+3. I created Release method to when process is done release that process from the queue
+4. Run Method is generate random numbers according to Exponential Distribution and always use the highest priority queue to add to queue.
 ```
-// Queues the Queues is a Passive Object representing resource
 type Queues struct {
 	id int
 	max int
@@ -219,15 +223,18 @@ func (process *Process) Run() {
 }
 
 ```
-*Approximate implementation time: 3 days (August 15th - August 17th)*
 
 
 ### Phase 4: Simulation on HTTP Server
 
+1. Create some graphs for visualize data
 ![Graph](2022-05-16_22-36_1.png)
+
+2. Create simulation for getting next process and calculate average burst time and arrival time and visualize queue.
 
 ![Simulation](2022-05-16_22-36.png)
 
+I use HTML template for transfering data to Golang to JavaScript. I transfered the Process Burst Time and Arrival Time array and when User Clicks the "Get Next Process" button, It gets the process from the Array. If User clicks the "Calculate Average Burst Time", burst time is calculated according to visualized queue.
 ```
 func httpserver(w http.ResponseWriter, _ *http.Request) {
 	// create a new line instance
@@ -251,7 +258,7 @@ func httpserver(w http.ResponseWriter, _ *http.Request) {
 }
 
 ```
-*Approximate implementation time: 3 days (August 15th - August 17th)*
+
 
 ## 2.3. Additional notes
 
