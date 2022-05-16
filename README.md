@@ -112,16 +112,12 @@ func roundRobin() {
 				processList[i].remainingTime = 0
 				values = append(values, opts.LineData{Value: values})
 
-				//fmt.Println(totalTime)
-				//fmt.Println("process id is finished ", processList[i].id)
 			} else if processList[i].remainingTime > 0 {
 
 				processList[i].remainingTime -= timeQuantum
 				totalTime -= timeQuantum
 				totalTimeCounted += timeQuantum
 				values = append(values, opts.LineData{Value: values})
-
-				//fmt.Println(totalTime)
 
 			}
 			if processList[i].remainingTime == 0 && !processList[i].isCalculated {
@@ -133,7 +129,6 @@ func roundRobin() {
 
 				processList[i].exitTime = processList[i].arrivalTime + processList[i].turnAroundTime
 				processList[i].isCalculated = true
-				//fmt.Println("process id is calculated ", processList[i].id)
 			}
 		}
 	}
